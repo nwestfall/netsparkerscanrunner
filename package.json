@@ -1,0 +1,34 @@
+{
+  "name": "netsparkerscanrunner",
+  "version": "0.1.0",
+  "description": "Run a scan using the netsparker API.",
+  "main": "runner.js",
+  "scripts": {
+    "scan": "node runner.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nwestfall/netsparkerscanrunner.git"
+  },
+  "keywords": [
+    "netsparker",
+    "scan",
+    "security"
+  ],
+  "author": "Nathan Westfall",
+  "license": "MIT",
+  "bin": {
+    "netsparker-scan-runner": "./runner.js"
+  },
+  "bugs": {
+    "url": "https://github.com/nwestfall/netsparkerscanrunner/issues"
+  },
+  "homepage": "https://github.com/nwestfall/netsparkerscanrunner#readme",
+  "dependencies": {
+    "command-line-args": "^5.0.2",
+    "command-line-usage": "^5.0.5",
+    "console.table": "^0.10.0",
+    "request": "^2.88.0"
+  }
+}
