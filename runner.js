@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const commandLineArgs = require('command-line-args');
 const commandLineUsage = require('command-line-usage');
+const jUnitBuilder = require('junit-report-builder');
 const cTable = require('console.table');
 const request = require('request');
 
@@ -9,6 +10,7 @@ const cmdOptions = [
     { name: 'apitoken', alias: 't', type: String },
     { name: 'profilename', alias: 'p', type: String },
     { name: 'targetsite', alias: 's', type: String },
+    { name: 'junit', alias: 'j', type: String },
     { name: 'report', alias: 'r', type: Boolean },
     { name: 'help', alias: 'h', type: Boolean }
 ]
@@ -47,6 +49,11 @@ const sections = [
                 description: 'If you want to wait around for the report (true) or to file and forget (false)'
             },
             {
+                name: 'junit',
+                typelabel: 'junit export location/name',
+                description: 'If you want to generate a junit report, enter the file name and location here'
+            },
+            {
                 name: 'help',
                 description: 'Print this usage guide'
             }
@@ -79,6 +86,10 @@ else {
     }
     if(options.report === undefined) {
         options.report = true;
+    }
+    if(!(options.junit) && options.report == false) {
+        console.error("You cannot specify a --junit location and set --report to false");
+        return;
     }
 
     console.info("Starting scan...");
@@ -130,7 +141,22 @@ else {
                         }
 
                         if(httpResponse.statusCode == 200) { 
-                            console.table(JSON.parse(body));
+                            var results = JSON.parse(body);
+                            console.table(results);
+                            if(options.junit) {
+                                console.log("Generating jUnit report...");
+                                var suite = jUnitBuilder.testSuite().name('NetsparkerSuite');
+                                for(var i = 0; i < results.length; i++) {
+                                    var result = results[i];
+                                    suite.testCase()
+                                        .className(result.Type)
+                                        .name(result.Title)
+                                        .standardOutput(result.IssueUrl)
+                                        .failure();
+                                }
+                                jUnitBuilder.writeTo(options.junit);
+                                console.log("jUnit report generated");
+                            }
                             console.log("Netsparker Scan Runner Complete!");
                         } else {
                             console.error("Invalid status code from Scan Result");
