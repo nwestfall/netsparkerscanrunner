@@ -1,6 +1,6 @@
 {
   "name": "netsparkerscanrunner",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Run a scan using the netsparker API.",
   "main": "runner.js",
   "scripts": {
