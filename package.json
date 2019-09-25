@@ -29,6 +29,7 @@
     "command-line-args": "^5.0.2",
     "command-line-usage": "^5.0.5",
     "console.table": "^0.10.0",
+    "lodash": "^4.17.15",
     "request": "^2.88.0"
   }
 }
