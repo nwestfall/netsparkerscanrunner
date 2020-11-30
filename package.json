@@ -5,6 +5,7 @@
   "main": "runner.js",
   "scripts": {
     "scan": "node runner.js",
+    "build": "ncc build action.js --minify",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -26,6 +27,7 @@
   },
   "homepage": "https://github.com/nwestfall/netsparkerscanrunner#readme",
   "dependencies": {
+    "@actions/core": "^1.2.6",
     "basic-auth-header": "^1.0.1",
     "command-line-args": "^5.0.2",
     "command-line-usage": "^5.0.5",
@@ -34,5 +36,8 @@
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.1",
     "sleep-promise": "^9.0.0"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.22.3"
   }
 }

@@ -1,28 +1,39 @@
 const Netsparker = require('./netsparker');
+const core = require('@actions/core')
+const githubEvent = require(process.env.GITHUB_EVENT_PATH)
 
-module.exports = class {
-    constructor ({ githubEvent, argv, config }) {
-        this.netsparker = new Netsparker(config.userid, config.apitoken, config.profilename, config.targetsite);
-    
-        this.config = config
-        this.argv = argv
-        this.githubEvent = githubEvent
-    }
-
-    async execute() {
-        const scanId = await this.netsparker.scan();
-        if(this.config.report) {
-            await this.netsparker.waitForScanToComplete(scanId);
-            const scanResults = await this.netsparker.scanResults(scanId);
-            if(this.config.junit) {
-                await this.netsparker.createJunitTestReport(scanResults, this.config.junit);
+async function exec () {
+    try
+    {
+        var config = parseConfig();
+        netsparker = new Netsparker(config.userid, config.apitoken, config.profilename, config.targetsite);
+        const scanId = await netsparker.scan();
+        if(config.report) {
+            await netsparker.waitForScanToComplete(scanId);
+            const scanResults = await netsparker.scanResults(scanId);
+            if(config.junit) {
+                await this.netsparker.createJunitTestReport(scanResults, config.junit);
             } else {
                 console.table(scanResults);
             }
 
-            return { scanresults: scanResults };
+            core.setOutput('scanresults', scanResults);
         }
-
-        return { scanresults: [] };
+    } catch (error) {
+        console.error(error)
+        process.exit(1)
     }
 }
+
+function parseConfig () {
+    return {
+      userid: core.getInput('userid'),
+      apitoken: core.getInput('apitoken'),
+      profilename: core.getInput('profilename'),
+      targetsite: core.getInput('targetsite'),
+      report: core.getInput('report'),
+      junit: core.getInput('junit')
+    }
+}
+
+exec()

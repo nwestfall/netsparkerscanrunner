@@ -26,7 +26,7 @@ outputs:
     description: 'Scan results from Netsparker (blank if `report` is false)'
 runs:
   using: 'node12'
-  main: 'action.js'
+  main: 'dist/index.js'
 branding:
   icon: 'shield'
   color: 'orange'
