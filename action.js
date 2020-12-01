@@ -8,16 +8,62 @@ async function exec () {
         var config = parseConfig();
         netsparker = new Netsparker(config.userid, config.apitoken, config.profilename, config.targetsite);
         const scanId = await netsparker.scan();
-        if(config.report) {
+        if(config.report
+            || (config.criticalthreshold || config.highthreshold || config.mediumthreshold)) {
             await netsparker.waitForScanToComplete(scanId);
             const scanResults = await netsparker.scanResults(scanId);
-            if(config.junit) {
-                await this.netsparker.createJunitTestReport(scanResults, config.junit);
-            } else {
-                console.table(scanResults);
-            }
-
             core.setOutput('scanresults', scanResults);
+            const scanReport = await netsparker.scanReport(scanId, 'Vulnerabilities', 'Json');
+            core.setOutput('scanreport', scanReport);
+            if(config.report) {
+                if(config.junit) {
+                    await this.netsparker.createJunitTestReport(scanResults, config.junit);
+                } else {
+                    console.table(scanResults);
+                }
+            } else {
+                var criticalCount = 0;
+                var highCount = 0;
+                var mediumCount = 0;
+                for(var i = 0; i < scanReport.Vulnerabilities.length; i++) {
+                    var v = scanReport.Vulnerabilities[i];
+                    switch(v.Severity) {
+                        case "Critical":
+                            criticalCount++;
+                            break;
+                        case "High":
+                            highCount++;
+                            break;
+                        case "Medium":
+                            mediumCount++;
+                            break;
+                    }
+                }
+
+                var thresholdReached = false;
+                if(config.criticalthreshold) {
+                    if(criticalCount > parseInt(config.criticalthreshold)) {
+                        thresholdReached = true;
+                        console.error(`Critical count exceeds threshold (${criticalCount}).`);
+                    }
+                }
+                if(config.highthreshold) {
+                    if(highCount > parseInt(config.highthreshold)) {
+                        thresholdReached = true;
+                        console.error(`High count exceeds threshold (${highCount}).`);
+                    }
+                }
+                if(config.mediumthreshold) {
+                    if(mediumCount > parseInt(config.mediumthreshold)) {
+                        thresholdReached = true;
+                        console.error(`Medium count exceeds threshold (${mediumCount}).`)
+                    }
+                }
+
+                if(thresholdReached) {
+                    throw new Error("One or more thresholds where reached.  Please see report in Netsparker");
+                }
+            }
         }
     } catch (error) {
         console.error(error)

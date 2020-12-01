@@ -21,9 +21,23 @@ inputs:
   junit:
     description: 'If you want to generate a junit report, enter the file name and location here'
     required: false
+  criticalthreshold:
+    description: 'Critical Severity Threshold'
+    required: false
+    default: '0'
+  highthreshold:
+    description: 'High Severity Threshold'
+    required: false
+    default: '0'
+  mediumthreshold:
+    description: 'Medium Severity Threshold'
+    required: false
+    default: '0'
 outputs:
   scanresults:
     description: 'Scan results from Netsparker (blank if `report` is false)'
+  scanreport:
+    description: 'Scan report from Netsparker (blank if `report` is false)'
 runs:
   using: 'node12'
   main: 'dist/index.js'

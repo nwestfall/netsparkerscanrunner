@@ -82,6 +82,23 @@ class Netsparker {
         return results;
     }
 
+    async scanReport(scanId, type, format) {
+        const response = await fetch(`https://www.netsparkercloud.com/api/1.0/scans/report/?excludeResponseData=true&format=${format}&id=${scanId}&type=${type}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': header(this.userid, this.apitoken)
+            }
+        });
+
+        if(!response.ok) {
+            throw new Error(response.statusText);
+        }
+
+        const body = await response.text();
+        const results = JSON.parse(body);
+        return results;
+    }
+
     createJunitTestReport(scanResults, junitFile) {
         const suite = jUnitBuilder.testSuite().name('NetsparkerSuite');
         for(var i = 0; i < scanResults.length; i++) {
