@@ -21,7 +21,8 @@ async function exec () {
                 } else {
                     console.table(scanResults);
                 }
-            } else {
+            }
+            if(config.criticalthreshold || config.highthreshold || config.mediumthreshold) {
                 var criticalCount = 0;
                 var highCount = 0;
                 var mediumCount = 0;
