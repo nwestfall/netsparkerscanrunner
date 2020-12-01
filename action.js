@@ -79,7 +79,10 @@ function parseConfig () {
       profilename: core.getInput('profilename'),
       targetsite: core.getInput('targetsite'),
       report: core.getInput('report'),
-      junit: core.getInput('junit')
+      junit: core.getInput('junit'),
+      criticalthreshold: core.getInput('criticalthreshold'),
+      highthreshold: core.getInput('highthreshold'),
+      mediumthreshold: core.getInput('mediumthreshold')
     }
 }
 
