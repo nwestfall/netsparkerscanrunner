@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 const commandLineArgs = require('command-line-args');
 const commandLineUsage = require('command-line-usage');
-const jUnitBuilder = require('junit-report-builder');
-const cTable = require('console.table');
-const request = require('request');
+const Netsparker = require('./netsparker');
 
 const cmdOptions = [
     { name: 'userid', alias: 'u', type: String },
@@ -46,7 +44,7 @@ const sections = [
             {
                 name: 'report',
                 typelabel: 'true/false (defaults: true)',
-                description: 'If you want to wait around for the report (true) or to file and forget (false)'
+                description: 'If you want to wait around for the report (true) or to fire and forget (false)'
             },
             {
                 name: 'junit',
@@ -61,154 +59,62 @@ const sections = [
     }
 ]
 
-const options = commandLineArgs(cmdOptions)
 
-if(options.help) {
-    const usage = commandLineUsage(sections)
-    console.log(usage)
-}
-else {
-    if(!(options.userid)) {
-        console.error("--userid is a required argument");
-        return;
-    }
-    if(!(options.apitoken)) {
-        console.error("--apitoken is a required argument");
-        return;
-    }
-    if(!(options.profilename)) {
-        console.error("--profilename is a required argument");
-        return;
-    }
-    if(!(options.targetsite)) {
-        console.error("--targetsite is a required argument");
-        return;
-    }
-    if(options.report === undefined) {
-        options.report = true;
-    }
-    if(!(options.junit) && options.report == false) {
-        console.error("You cannot specify a --junit location and set --report to false");
-        return;
-    }
+async function run() {
+    try {
+        const options = commandLineArgs(cmdOptions)
 
-    console.info("Starting scan...");
-    var scanRequestOptions = {
-        url: 'https://www.netsparkercloud.com/api/1.0/scans/newwithprofile',
-        method: 'POST',
-        body: `{ "ProfileName": "${options.profilename}", "TargetUri": "${options.targetsite}" }`,
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        auth: {
-            'user': options.userid,
-            'pass': options.apitoken
-        }
-    };
-    request(scanRequestOptions, function(err, httpResponse, body) {
-        if(err) {
-            console.error(err);
-            return;
-        }
+        if(options.help) {
+            const usage = commandLineUsage(sections)
+            console.log(usage)
+        } else {
+            if(!(options.userid)) {
+                console.error("--userid is a required argument");
+                return;
+            }
+            if(!(options.apitoken)) {
+                console.error("--apitoken is a required argument");
+                return;
+            }
+            if(!(options.profilename)) {
+                console.error("--profilename is a required argument");
+                return;
+            }
+            if(!(options.targetsite)) {
+                console.error("--targetsite is a required argument");
+                return;
+            }
+            if(options.report === undefined) {
+                options.report = true;
+            }
+            if(!(options.junit) && options.report == false) {
+                console.error("You cannot specify a --junit location and set --report to false");
+                return;
+            }
 
-        if(httpResponse.statusCode == 201) {
-            // OK!
-            var scanId = JSON.parse(body).Id;
-            console.log(`Scan triggered! - ${scanId}`);
-
-            // if we want a report, keep checking the status
+            const netsparker = new Netsparker(options.userid, options.apitoken, options.profilename, options.targetsite);
+            
+            console.info("Starting scan...");
+            const scanId = await netsparker.scan();
+            console.info("Scan complete");
             if(options.report) {
-                // check status until complete or failed
-                
-                loopScanStatus(options, scanId).then((resp) => {
-                    console.log(`Scan complete!  Completed Steps - ${resp.CompletedSteps}`);
-                    var scanResultOptions = {
-                        url: `https://www.netsparkercloud.com/api/1.0/scans/result/${scanId}`,
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        },
-                        auth: {
-                            'user': options.userid,
-                            'pass': options.apitoken
-                        }
-                    };
-                    request(scanResultOptions, function(err, httpResponse, body) {
-                        if(err) {
-                            console.error(err);
-                            return;
-                        }
-
-                        if(httpResponse.statusCode == 200) { 
-                            var results = JSON.parse(body);
-                            console.table(results);
-                            if(options.junit) {
-                                console.log("Generating jUnit report...");
-                                var suite = jUnitBuilder.testSuite().name('NetsparkerSuite');
-                                for(var i = 0; i < results.length; i++) {
-                                    var result = results[i];
-                                    suite.testCase()
-                                        .className(result.Type)
-                                        .name(result.Title)
-                                        .standardOutput(result.IssueUrl)
-                                        .failure();
-                                }
-                                jUnitBuilder.writeTo(options.junit);
-                                console.log("jUnit report generated");
-                            }
-                            console.log("Netsparker Scan Runner Complete!");
-                        } else {
-                            console.error("Invalid status code from Scan Result");
-                        }
-                    });
-                }).catch((error) => {
-                    console.error(error);
-                    return;
-                })
+                await netsparker.waitForScanToComplete(scanId);
+                const scanResults = await netsparker.scanResults(scanId);
+                console.table(scanResults);
+                if(options.junit) {
+                    console.log("Generating jUnit report...");
+                    netsparker.createJunitTestReport(scanResults, options.junit);
+                    console.log("jUnit report generated");
+                }
             } else {
                 console.log("Check the Netsparker Cloud portal for the status and outcome of your scan.");
                 return;
             }
         }
-    });
+    } catch(e) {
+        console.error(e);
+    }
 }
 
-function loopScanStatus(options, scanId) {
-    var promise = new Promise(function(resolve, reject) {
-        var scanStatusOptions = {
-            url: `https://www.netsparkercloud.com/api/1.0/scans/status/${scanId}`,
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            },
-            auth: {
-                'user': options.userid,
-                'pass': options.apitoken
-            }
-        };
-        request(scanStatusOptions, function(err, httpResponse, body) {
-            if(err) {
-                reject(error);
-            } else {
-                if(httpResponse.statusCode == 200) {
-                    var result = JSON.parse(body);
-                    if(result.State == "Complete") {
-                        resolve(result);
-                    } else {
-                        if(result.EstimatedLaunchTime == null)
-                            console.log(`Scan running - ${result.CompletedSteps}/${result.EstimatedSteps} complete`);
-                        else
-                            console.log(`Scan estimated start time - ${result.EstimatedLaunchTime}`);
-                        setTimeout(function() {
-                            loopScanStatus(options, scanId).then(resolve).catch(reject);
-                        }, 5000);
-                    }
-                } else {
-                    reject("Unknown status code from Scan Status");
-                }
-            }
-        });
-    });
-    return promise;
-}
+
+run();

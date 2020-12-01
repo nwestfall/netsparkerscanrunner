@@ -1,0 +1,46 @@
+name: 'Netsparker Scan Runner'
+description: 'Run Netsparker Scans and get back test results'
+author: 'nwestfall'
+inputs:
+  userid:
+    description: 'The user id from your Netsparker Account'
+    required: true
+  apitoken:
+    description: 'The api token from your Netsparker Account'
+    required: true
+  profilename:
+    description: 'The profile name saved in your Netsparker Account'
+    required: true
+  targetsite:
+    description: 'The target url you want to run against'
+    required: true
+  report:
+    description: 'If you want to wait around for the report (true) or to fire and forget (false)'
+    required: false
+    default: 'true'
+  junit:
+    description: 'If you want to generate a junit report, enter the file name and location here'
+    required: false
+  criticalthreshold:
+    description: 'Critical Severity Threshold'
+    required: false
+    default: '0'
+  highthreshold:
+    description: 'High Severity Threshold'
+    required: false
+    default: '0'
+  mediumthreshold:
+    description: 'Medium Severity Threshold'
+    required: false
+    default: '0'
+outputs:
+  scanresults:
+    description: 'Scan results from Netsparker (blank if `report` is false)'
+  scanreport:
+    description: 'Scan report from Netsparker (blank if `report` is false)'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
+branding:
+  icon: 'shield'
+  color: 'orange'
