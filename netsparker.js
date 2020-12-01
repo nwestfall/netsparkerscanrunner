@@ -83,7 +83,7 @@ class Netsparker {
     }
 
     createJunitTestReport(scanResults, junitFile) {
-        const suite = jUnitBuilder.testSuit().name('NetsparkerSuite');
+        const suite = jUnitBuilder.testSuite().name('NetsparkerSuite');
         for(var i = 0; i < scanResult.length; i++) {
             const result = results[i];
             suite.testCase()
