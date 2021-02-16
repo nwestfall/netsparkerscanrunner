@@ -8,8 +8,7 @@ async function exec () {
         var config = parseConfig();
         netsparker = new Netsparker(config.userid, config.apitoken, config.profilename, config.targetsite);
         const scanId = await netsparker.scan();
-        if(config.report
-            || (config.criticalthreshold || config.highthreshold || config.mediumthreshold)) {
+        if(config.report) {
             await netsparker.waitForScanToComplete(scanId);
             const scanResults = await netsparker.scanResults(scanId);
             core.setOutput('scanresults', scanResults);
