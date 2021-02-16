@@ -8,13 +8,13 @@ async function exec () {
         var config = parseConfig();
         netsparker = new Netsparker(config.userid, config.apitoken, config.profilename, config.targetsite);
         const scanId = await netsparker.scan();
-        if(config.report) {
+        if(config.report === 'true') {
             await netsparker.waitForScanToComplete(scanId);
             const scanResults = await netsparker.scanResults(scanId);
             core.setOutput('scanresults', scanResults);
             const scanReport = await netsparker.scanReport(scanId, 'Vulnerabilities', 'Json');
             core.setOutput('scanreport', scanReport);
-            if(config.report) {
+            if(config.report === 'true') {
                 if(config.junit) {
                     await this.netsparker.createJunitTestReport(scanResults, config.junit);
                 } else {
